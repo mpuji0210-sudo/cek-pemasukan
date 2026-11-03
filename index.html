@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>MKP - Manajer Keuangan Pribadi</title>
+    <meta name="theme-color" content="#0F172A" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="css/style.css" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+  </head>
+  <body>
+    <div id="authGate" style="position:fixed;inset:0;z-index:9999;background:#f8fafc;display:flex;align-items:center;justify-content:center;padding:20px">
+      <div style="width:100%;max-width:360px;background:#fff;border:1px solid #e2e8f0;border-radius:20px;padding:24px;text-align:center">
+        <div style="width:48px;height:48px;background:#0f172a;color:#fff;border-radius:12px;display:grid;place-items:center;margin:0 auto;font-weight:800">MKP</div>
+        <h3 style="margin-top:14px">Login MKP</h3>
+        <p id="authMsg" style="font-size:12px;color:#64748b;margin-top:6px">Cek sesi...</p>
+        <button onclick="doLogin()" style="width:100%;margin-top:14px;padding:12px;border-radius:12px;background:#0f172a;color:#fff;border:none;font-weight:700">Masuk dengan Google</button>
+      </div>
+    </div>
+
+    <div class="top">
+      <div style="display:flex;gap:10px;align-items:center">
+        <button type="button" class="burger" onclick="toggleMenu()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="17" x2="20" y2="17"/></svg></button>
+        <div class="brand"><div class="brand-badge">MKP</div><div><div style="font-size:14px">Manajer Keuangan Pribadi</div><div style="font-size:10px;color:var(--muted)">Kelola keuangan dengan mudah</div></div></div>
+      </div>
+      <div><button type="button" class="calIcon" onclick="openCalModal()"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="18" rx="3"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></button></div>
+    </div>
+
+    <div class="drawer" id="drawer">
+      <button type="button" class="m-item active" onclick="openTab('beranda')">📊 Beranda</button>
+      <button type="button" class="m-item" onclick="openTab('aset')">💼 Aset & Inventaris</button>
+      <button type="button" class="m-item" onclick="openTab('hutang')">💳 Hutang</button>
+      <button type="button" class="m-item" onclick="openTab('pendapatan')">💹 Arus Masuk</button>
+      <button type="button" class="m-item" onclick="openTab('pengeluaran')">💸 Arus Keluar</button>
+      <button type="button" class="m-item" onclick="openTab('anggaran')">🎯 Anggaran</button>
+      <button type="button" class="m-item" onclick="openTab('investasi')">📈 Investasi</button>
+      <button type="button" class="m-item" onclick="openTab('ai')">🤖 AI Keuangan</button>
+      <button type="button" class="m-item" onclick="openTab('pengaturan')">⚙️ Pengaturan</button>
+    </div>
+    <div class="ov" id="ov" onclick="toggleMenu()"></div>
+
+    <div class="main">
+      <div id="tab-beranda" class="tab active">
+        <div class="hero"><small>Kekayaan Bersih</small><b id="netWorth" class="num">Rp 0</b><div style="display:flex;gap:20px"><div><small>Aset</small><div id="tAset" class="num">Rp 0</div></div><div><small>Hutang</small><div id="tHutang" class="num">Rp 0</div></div></div></div>
+        
+        <!-- AI INSIGHT BARU - LANGSUNG TAMBAH DISINI -->
+        <div id="aiInsight"></div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 14px"><div class="card" style="margin:0"><small>Masuk</small><b id="kMasuk" class="num" style="color:var(--ok)">Rp 0</b></div><div class="card" style="margin:0"><small>Keluar</small><b id="kKeluar" class="num" style="color:var(--danger)">Rp 0</b></div></div>
+        <div class="card" style="background:var(--ink);color:#fff"><small>Sisa Bersih</small><b id="kSisa" class="num" style="font-size:22px;display:block">Rp 0</b><div id="notif" style="margin-top:10px;font-size:11px;opacity:.75;background:rgba(255,255,255,.08);padding:8px 10px;border-radius:10px"></div></div>
+        <div id="berandaCash"></div><div id="berandaBank"></div><div id="berandaEwallet"></div>
+        <div class="card"><b>Distribusi Aset</b><div class="chartWrap"><canvas id="assetPieChart"></canvas></div><div id="assetPieLegend" class="pieLegend"></div></div>
+        <div id="berandaInvest"></div><div id="berandaBarang"></div><div id="berandaHutang" class="card"></div><div id="berandaAnggaran"></div>
+        <div class="card"><b>Pengeluaran per Kategori</b><div class="chartWrap"><canvas id="pieChart"></canvas></div><div id="pieLegend" class="pieLegend"></div></div>
+        <div class="card"><b>Pergerakan 14 Hari</b><div style="height:180px"><canvas id="chart"></canvas></div></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:0 10px;margin:0 14px"><div><small style="font-weight:800;color:var(--ok)">Pemasukan Terbaru</small><div id="berandaDari"></div></div><div><small style="font-weight:800;color:var(--danger)">Pengeluaran Terbaru</small><div id="berandaKemana"></div></div></div>
+      </div>
+
+      <div id="tab-aset" class="tab"><div class="card"><select id="jenisUang" class="input" onchange="toggleCustomInput('jenisUang','namaUangCustom')"><option>Dompet Cash</option><option>BCA</option><option>BRI</option><option>BNI</option><option>Jago</option><option>SeaBank</option><option>GoPay</option><option>OVO</option><option>DANA</option><option value="lain">Lainnya</option></select><input id="namaUangCustom" class="input" placeholder="Nama aset custom" style="display:none"><input id="saldoUang" class="input num" type="number" placeholder="Saldo Rp"><button type="button" class="btn btn-y" onclick="addMoney()">+ Tambah Aset Uang</button><div id="bulkMoney" class="bulkBar"><span><span id="countMoney">0</span> terpilih</span><button type="button" onclick="deleteBulk('money')" style="background:#fff;color:var(--danger);border:none;padding:6px 12px;border-radius:8px">Hapus</button></div><div id="listMoney"></div></div><div class="card"><select id="jenisBarang" class="input" onchange="toggleCustomInput('jenisBarang','namaBarangCustom')"><option>Motor</option><option>Rumah</option><option>Mobil</option><option value="lain">Lainnya</option></select><input id="namaBarangCustom" class="input" placeholder="Nama barang custom" style="display:none"><input id="lokasiBarang" class="input" placeholder="Lokasi"><input id="nilaiBarang" class="input num" type="number" placeholder="Nilai Rp"><button type="button" class="btn btn-y" onclick="addPhysical()">+ Tambah Barang</button><div id="bulkPhysical" class="bulkBar"><span><span id="countPhysical">0</span> terpilih</span><button type="button" onclick="deleteBulk('physical')" style="background:#fff;color:var(--danger);border:none;padding:6px 12px;border-radius:8px">Hapus</button></div><div id="listPhysical"></div></div></div>
+
+      <div id="tab-investasi" class="tab">
+        <div class="card">
+          <select id="jenisInvest" class="input"><option value="Saham">Saham</option><option value="Crypto">Crypto</option><option value="Emas">Emas</option><option value="Deposito">Deposito</option></select>
+          <input id="namaInvest" class="input" placeholder="Kode Saham (contoh: BBCA)">
+          <input id="lotInvest" class="input num" type="number" placeholder="Jumlah Lot (1 lot = 100 lembar)">
+          <input id="avgInvest" class="input num" type="number" placeholder="Harga Beli per Lembar (contoh: 9000)">
+          <input id="nilaiInvest" class="input num" type="number" placeholder="Nilai Rp (otomatis kalau saham)" style="display:none">
+          <button type="button" class="btn btn-y" onclick="addInvest()">+ Tambah Investasi</button>
+          <div id="bulkInvest" class="bulkBar"><span><span id="countInvest">0</span> terpilih</span><button type="button" onclick="deleteBulk('invest')" style="background:#fff;color:var(--danger);border:none;padding:6px 12px;border-radius:8px">Hapus</button></div>
+          <div id="listInvest"></div>
+        </div>
+        <div class="card"><b>Total Investasi</b><div id="totalInvest" class="num">Rp 0</div><small style="color:#64748B;font-size:11px">* Floating tidak masuk Kekayaan Bersih Beranda (Belum Real)</small></div>
+      </div>
+
+      <!-- TAB AI BARU - LANGSUNG TAMBAH KESINI -->
+      <div id="tab-ai" class="tab">
+        <div class="card" style="background:linear-gradient(180deg,#0F172A 0%, #1E293B 100%);color:#fff">
+          <b>🤖 AI Keuangan Pribadi</b>
+          <p style="font-size:12px;opacity:.7;margin-top:6px">Tanya apa aja soal keuangan kamu. AI baca data Beranda, Aset, BBCA lot, dll.</p>
+          <div id="aiStatus" style="margin-top:10px;font-size:11px;background:rgba(255,255,255,.1);padding:8px 10px;border-radius:10px">Siap menganalisis...</div>
+        </div>
+        <div class="card">
+          <div id="aiChatBox" style="max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:8px"></div>
+          <div style="display:flex;gap:8px;margin-top:12px">
+            <input id="aiInput" class="input" style="margin:0;flex:1" placeholder="Contoh: Kenapa saya boros?">
+            <button class="btn btn-y" style="width:auto;margin:0;padding:0 18px" onclick="sendAI()">Kirim</button>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+            <button class="filterChip" onclick="quickAI('Analisis keuangan hari ini')">Analisis Hari Ini</button>
+            <button class="filterChip" onclick="quickAI('Kenapa beranda saya -1.150.000?')">Kenapa -1.150.000?</button>
+            <button class="filterChip" onclick="quickAI('Berapa floating BBCA saya?')">Floating BBCA?</button>
+            <button class="filterChip" onclick="quickAI('Saran hemat bensin dan makan')">Saran Hemat</button>
+          </div>
+        </div>
+        <div class="card">
+          <b>Insight Otomatis</b>
+          <div id="aiAutoInsight" style="margin-top:8px;font-size:13px;color:#64748B">Memuat...</div>
+        </div>
+      </div>
+
+      <div id="tab-anggaran" class="tab"><div class="card"><select id="aKategori" class="input" onchange="toggleCustomInput('aKategori','aCustom')"><option>Liburan</option><option>Investasi</option><option>Darurat</option><option>Bensin</option><option>Makan</option><option value="lain">Lainnya</option></select><input id="aCustom" class="input" placeholder="Kategori custom" style="display:none"><input id="aLimit" class="input num" type="number" placeholder="Limit Rp"><input id="aNama" class="input" placeholder="Nama anggaran"><input id="aTarget" class="input num" type="number" placeholder="Target tabungan Rp (opsional)"><button type="button" class="btn btn-y" onclick="addAnggaran()">+ Atur Anggaran</button><div id="listAnggaran"></div></div><div class="card"><b>Realisasi vs Anggaran Bulan Ini</b><div id="anggaranProgress"></div></div><div class="card"><b>Anggaran Tabungan</b><div id="anggaranKhusus"></div></div></div>
+      <div id="tab-hutang" class="tab"><div class="card"><input id="namaHutang" class="input" placeholder="Nama hutang"><input id="sisaHutang" class="input num" type="number" placeholder="Sisa hutang Rp"><input id="cicilanHutang" class="input num" type="number" placeholder="Cicilan per hari Rp"><select id="sumberBayar" class="input"><option value="">Pilih sumber untuk bayar hutang</option></select><button type="button" class="btn btn-y" onclick="addDebt()">+ Tambah Hutang</button><div id="bulkDebts" class="bulkBar"><span><span id="countDebts">0</span> terpilih</span><button type="button" onclick="deleteBulk('debts')" style="background:#fff;color:var(--danger);border:none;padding:6px 12px;border-radius:8px">Hapus</button></div><div id="listDebt"></div></div></div>
+      <div id="tab-pendapatan" class="tab"><div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><b>Arus Masuk</b><button type="button" class="btn-outline" style="width:auto;padding:6px 10px;font-size:11px;margin:0" onclick="toggleBulk('pendapatan')">Pilih</button></div><div class="card" style="margin:10px 0 0 0;background:var(--paper);border-style:dashed"><div style="font-size:12px;font-weight:700">Filter</div><div style="display:flex;gap:8px"><input id="filterMasukDate" type="date" class="input" style="margin:0" onchange="filterCustom('pendapatan')"><input id="filterMasukMonth" type="month" class="input" style="margin:0" onchange="filterCustom('pendapatan')"></div><div class="filterBar" style="margin-top:8px"><div class="filterChip active" id="mChipHari" onclick="setFilter('pendapatan','hari')">Hari Ini</div><div class="filterChip" id="mChipBulan" onclick="setFilter('pendapatan','bulan')">Bulan Ini</div><div class="filterChip" id="mChipTahun" onclick="setFilter('pendapatan','tahun')">Tahun Ini</div><div class="filterChip" id="mChipSemua" onclick="setFilter('pendapatan','semua')">Semua</div></div><div id="masukTotalInfo" class="num" style="margin-top:8px">Total: Rp 0</div></div><input id="pJumlah" class="input num" type="number" placeholder="Jumlah pemasukan Rp"><select id="pSumber" class="input"><option value="">Pilih sumber masuk</option></select><input id="pCatatan" class="input" placeholder="Catatan (dari mana)"><button type="button" class="btn btn-y" onclick="addPendapatan()">+ Catat Pemasukan</button><div id="bulkPendapatan" class="bulkBar"><span><span id="countPendapatan">0</span> terpilih</span><button type="button" onclick="deleteBulk('pendapatan')" style="background:#fff;color:var(--danger);border:none;padding:6px 12px;border-radius:8px">Hapus</button></div><div id="listPendapatan"></div></div></div>
+      <div id="tab-pengeluaran" class="tab"><div class="card"><div style="display:flex;justify-content:space-between;align-items:center"><b>Arus Keluar</b><button type="button" class="btn-outline" style="width:auto;padding:6px 10px;font-size:11px;margin:0" onclick="toggleBulk('pengeluaran')">Pilih</button></div><div class="card" style="margin:10px 0 0 0;background:var(--paper);border-style:dashed"><div style="font-size:12px;font-weight:700">Filter</div><div style="display:flex;gap:8px"><input id="filterKeluarDate" type="date" class="input" style="margin:0" onchange="filterCustom('pengeluaran')"><input id="filterKeluarMonth" type="month" class="input" style="margin:0" onchange="filterCustom('pengeluaran')"></div><div class="filterBar" style="margin-top:8px"><div class="filterChip active" id="kChipHari" onclick="setFilter('pengeluaran','hari')">Hari Ini</div><div class="filterChip" id="kChipBulan" onclick="setFilter('pengeluaran','bulan')">Bulan Ini</div><div class="filterChip" id="kChipTahun" onclick="setFilter('pengeluaran','tahun')">Tahun Ini</div><div class="filterChip" id="kChipSemua" onclick="setFilter('pengeluaran','semua')">Semua</div></div><div id="keluarTotalInfo" class="num" style="margin-top:8px">Total: Rp 0</div></div><input id="eJumlah" class="input num" type="number" placeholder="Jumlah pengeluaran Rp"><select id="eKategori" class="input" onchange="toggleCustomInput('eKategori','eCustom')"><option>Bensin</option><option>Makan</option><option>Rokok</option><option>Kopi</option><option value="lain">Lainnya</option></select><input id="eCustom" class="input" placeholder="Kategori custom" style="display:none"><select id="eSumber" class="input"><option value="">Pilih sumber keluar</option></select><input id="eCatatan" class="input" placeholder="Catatan pengeluaran"><button type="button" class="btn" style="background:var(--ink);color:#fff" onclick="addPengeluaran()">- Catat Pengeluaran</button><div id="bulkPengeluaran" class="bulkBar"><span><span id="countPengeluaran">0</span> terpilih</span><button type="button" onclick="deleteBulk('pengeluaran')" style="background:#fff;color:var(--danger);border:none;padding:6px 12px;border-radius:8px">Hapus</button></div><div id="listPengeluaran"></div></div></div>
+      <div id="tab-pengaturan" class="tab"><div class="card"><b>Pengaturan</b><p style="margin-top:8px;font-size:13px;color:var(--muted)">Data disimpan di browser Anda.</p><div style="margin-top:16px"><button type="button" class="btn" style="background:#DC2626;color:#fff" onclick="resetAll()">Hapus Semua Data</button><button onclick="logout()" style="width:100%;margin-top:12px;padding:14px;border-radius:12px;border:1px solid #E2E8F0;background:#fff;color:#0F172A;font-weight:700;">Logout / Ganti Akun</button><div id="userInfo" style="text-align:center;font-size:12px;color:#64748B;margin-top:10px;"></div></div></div></div>
+    </div>
+
+    <div id="calModal"><div class="modal-bg" onclick="closeCalModal()"></div><div class="modal-box"><div class="modal-card"><div style="padding:20px"><div style="font-weight:800">Filter Kalender</div><div style="display:flex;gap:8px;margin-top:10px"><input id="berandaDate" type="date" class="input" style="margin:0" onchange="setBerandaCustomDate()"><input id="berandaMonth" type="month" class="input" style="margin:0" onchange="setBerandaCustomMonth()"></div><div class="filterBar" style="margin-top:10px"><div class="filterChip active" id="chipHari" onclick="setBerandaView('hari')">Harian</div><div class="filterChip" id="chipBulan" onclick="setBerandaView('bulan')">Bulanan</div><div class="filterChip" id="chipTahun" onclick="setBerandaView('tahun')">Tahunan</div><div class="filterChip" id="chipSemua" onclick="setBerandaView('semua')">Semua</div></div><div style="margin-top:12px"><button type="button" class="btn btn-y" onclick="closeCalModal()">Terapkan Filter</button><button type="button" class="btn btn-outline" onclick="resetBerandaFilter()">Reset ke Hari Ini</button></div></div></div></div></div>
+    <div id="mkpModal"><div class="modal-bg" onclick="closeMkpModal()"></div><div class="modal-box"><div class="modal-card"><div style="padding:20px"><div id="mTitle" style="font-weight:800">Konfirmasi</div><div id="mDesc" style="margin-top:6px;font-size:13px;color:var(--muted)"></div><div id="mForm" style="display:none;margin-top:12px"></div></div><div style="display:flex;gap:8px;padding:12px;background:#F8FAFC;border-top:1px solid var(--line)"><button type="button" class="btn" style="flex:1;background:#fff;border:1px solid var(--line);margin:0" onclick="closeMkpModal()">Batal</button><button type="button" id="mConfirmBtn" class="btn" style="flex:1;background:var(--ink);color:#fff;margin:0" onclick="confirmMkpAction()">Ya</button></div></div></div></div>
+    <div id="toast" class="toast"></div>
+    <div class="bottomNav">
+      <button type="button" class="bNavItem active" id="bBeranda" onclick="openTab('beranda')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1h-5v-5H9v5H4a1 1 0 0 1-1-1V9.5z"/></svg><span>Beranda</span></button>
+      <button type="button" class="bNavItem" id="bTransaksi" onclick="openTab('pendapatan')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="4" y="3" width="16" height="18" rx="2"/><path d="M8 9h8M8 13h8M8 17h5"/></svg><span>Transaksi</span></button>
+      <button type="button" class="bNavItem" id="bInvestasi" onclick="openTab('investasi')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg><span>Investasi</span></button>
+      <button type="button" class="bNavItem" id="bAnggaran" onclick="openTab('anggaran')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/></svg><span>Anggaran</span></button>
+      <button type="button" class="bNavItem" id="bProfil" onclick="openTab('pengaturan')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg><span>Profil</span></button>
+    </div>
+
+    <script type="module" src="js/app.js"></script>
+  </body>
+</html>
