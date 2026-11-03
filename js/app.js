@@ -24,8 +24,8 @@ export function genId() {
 
 // FIX: KEY PER USER + BERSIHIN HANTU 8668888
 function getUserKey(k) {
-  const uid = localStorage.getItem('mkp_last_uid') || 'guest'
-  return `${k}_${uid}`
+  const uid = localStorage.getItem("mkp_last_uid") || "guest";
+  return `${k}_${uid}`;
 }
 
 export function safeParse(k, fb) {
@@ -36,7 +36,7 @@ export function safeParse(k, fb) {
     let parsed = JSON.parse(v);
     // FILTER HANTU 8668888 OTOMATIS
     if (Array.isArray(parsed)) {
-      parsed = parsed.filter(x => {
+      parsed = parsed.filter((x) => {
         if (!x) return false;
         if (x.balance === 8668888 || x.balance === 866888) return false;
         if (x.value === 8668888 || x.value === 866888) return false;
@@ -84,23 +84,28 @@ export let _pendingAction = null;
 
 // DIPANGGIL DARI auth.js SETIAP LOGIN
 export function initForUser(userId) {
-  const last = localStorage.getItem('mkp_last_uid')
+  const last = localStorage.getItem("mkp_last_uid");
   if (last && last !== userId) {
     // GANTI EMAIL / USER BARU -> PAKSA 0
-    money = []; physical = []; invest = []; debts = [];
-    pendapatan = []; pengeluaran = []; anggaran = [];
-    localStorage.setItem('mkp_last_uid', userId)
-    save()
+    money = [];
+    physical = [];
+    invest = [];
+    debts = [];
+    pendapatan = [];
+    pengeluaran = [];
+    anggaran = [];
+    localStorage.setItem("mkp_last_uid", userId);
+    save();
   } else {
-    localStorage.setItem('mkp_last_uid', userId)
+    localStorage.setItem("mkp_last_uid", userId);
     // load ulang data per user
-    money = safeParse("brankas_money", [])
-    physical = safeParse("brankas_physical", [])
-    invest = safeParse("brankas_invest", [])
-    debts = safeParse("brankas_debt", [])
-    pendapatan = safeParse("brankas_pendapatan", [])
-    pengeluaran = safeParse("brankas_pengeluaran", [])
-    anggaran = safeParse("brankas_anggaran", [])
+    money = safeParse("brankas_money", []);
+    physical = safeParse("brankas_physical", []);
+    invest = safeParse("brankas_invest", []);
+    debts = safeParse("brankas_debt", []);
+    pendapatan = safeParse("brankas_pendapatan", []);
+    pengeluaran = safeParse("brankas_pengeluaran", []);
+    anggaran = safeParse("brankas_anggaran", []);
   }
 }
 
@@ -155,13 +160,19 @@ export function toggleMenu() {
   }
 }
 export function openTab(t) {
-  document.querySelectorAll(".tab").forEach((x) => x.classList.remove("active"));
+  document
+    .querySelectorAll(".tab")
+    .forEach((x) => x.classList.remove("active"));
   let tg = $("tab-" + t);
   if (tg) tg.classList.add("active");
-  document.querySelectorAll(".m-item").forEach((b) => b.classList.remove("active"));
+  document
+    .querySelectorAll(".m-item")
+    .forEach((b) => b.classList.remove("active"));
   let dr = $("drawer");
   if (dr && dr.classList.contains("open")) toggleMenu();
-  document.querySelectorAll(".bNavItem").forEach((b) => b.classList.remove("active"));
+  document
+    .querySelectorAll(".bNavItem")
+    .forEach((b) => b.classList.remove("active"));
   let map = {
     beranda: "bBeranda",
     pendapatan: "bTransaksi",
@@ -185,8 +196,15 @@ export function toggleCustomInput(s, i) {
 }
 export function setBerandaView(v) {
   berandaView = v;
-  document.querySelectorAll("#calModal .filterChip").forEach((c) => c.classList.remove("active"));
-  let m = { hari: "chipHari", bulan: "chipBulan", tahun: "chipTahun", semua: "chipSemua" };
+  document
+    .querySelectorAll("#calModal .filterChip")
+    .forEach((c) => c.classList.remove("active"));
+  let m = {
+    hari: "chipHari",
+    bulan: "chipBulan",
+    tahun: "chipTahun",
+    semua: "chipSemua",
+  };
   let el = $(m[v]);
   if (el) el.classList.add("active");
   renderAll();
@@ -195,14 +213,18 @@ export function setBerandaCustomDate() {
   let bd = $("berandaDate");
   berandaDateFilter = bd && bd.value ? new Date(bd.value) : null;
   berandaView = "custom";
-  document.querySelectorAll("#calModal .filterChip").forEach((c) => c.classList.remove("active"));
+  document
+    .querySelectorAll("#calModal .filterChip")
+    .forEach((c) => c.classList.remove("active"));
   renderAll();
 }
 export function setBerandaCustomMonth() {
   let bm = $("berandaMonth");
   berandaMonthFilter = bm && bm.value ? bm.value : null;
   berandaView = "customMonth";
-  document.querySelectorAll("#calModal .filterChip").forEach((c) => c.classList.remove("active"));
+  document
+    .querySelectorAll("#calModal .filterChip")
+    .forEach((c) => c.classList.remove("active"));
   renderAll();
 }
 export function resetBerandaFilter() {
@@ -213,7 +235,9 @@ export function resetBerandaFilter() {
   berandaDateFilter = null;
   berandaMonthFilter = null;
   berandaView = "hari";
-  document.querySelectorAll("#calModal .filterChip").forEach((c) => c.classList.remove("active"));
+  document
+    .querySelectorAll("#calModal .filterChip")
+    .forEach((c) => c.classList.remove("active"));
   let ch = $("chipHari");
   if (ch) ch.classList.add("active");
   closeCalModal();
@@ -221,12 +245,16 @@ export function resetBerandaFilter() {
 export function setFilter(type, val) {
   if (type === "pendapatan") {
     masukFilter = val;
-    document.querySelectorAll("[id^=mChip]").forEach((e) => e.classList.remove("active"));
+    document
+      .querySelectorAll("[id^=mChip]")
+      .forEach((e) => e.classList.remove("active"));
     let el = $("mChip" + val.charAt(0).toUpperCase() + val.slice(1));
     if (el) el.classList.add("active");
   } else {
     keluarFilter = val;
-    document.querySelectorAll("[id^=kChip]").forEach((e) => e.classList.remove("active"));
+    document
+      .querySelectorAll("[id^=kChip]")
+      .forEach((e) => e.classList.remove("active"));
     let el2 = $("kChip" + val.charAt(0).toUpperCase() + val.slice(1));
     if (el2) el2.classList.add("active");
   }
@@ -257,22 +285,30 @@ export function deleteBulk(cat) {
     desc: "Hapus terpilih?",
     confirmText: "Hapus",
     action: () => {
-      if (cat === "money") money = money.filter((x) => !selected[cat].has(x.id));
-      if (cat === "invest") invest = invest.filter((x) => !selected[cat].has(x.id));
-      if (cat === "physical") physical = physical.filter((x) => !selected[cat].has(x.id));
-      if (cat === "debts") debts = debts.filter((x) => !selected[cat].has(x.id));
+      if (cat === "money")
+        money = money.filter((x) => !selected[cat].has(x.id));
+      if (cat === "invest")
+        invest = invest.filter((x) => !selected[cat].has(x.id));
+      if (cat === "physical")
+        physical = physical.filter((x) => !selected[cat].has(x.id));
+      if (cat === "debts")
+        debts = debts.filter((x) => !selected[cat].has(x.id));
       if (cat === "pendapatan") {
-        pendapatan.filter((x) => selected[cat].has(x.id)).forEach((h) => {
-          let m = money.find((x) => x.name === h.sumber);
-          if (m) m.balance -= h.jml;
-        });
+        pendapatan
+          .filter((x) => selected[cat].has(x.id))
+          .forEach((h) => {
+            let m = money.find((x) => x.name === h.sumber);
+            if (m) m.balance -= h.jml;
+          });
         pendapatan = pendapatan.filter((x) => !selected[cat].has(x.id));
       }
       if (cat === "pengeluaran") {
-        pengeluaran.filter((x) => selected[cat].has(x.id)).forEach((h) => {
-          let m = money.find((x) => x.name === h.sumber);
-          if (m) m.balance += h.jml;
-        });
+        pengeluaran
+          .filter((x) => selected[cat].has(x.id))
+          .forEach((h) => {
+            let m = money.find((x) => x.name === h.sumber);
+            if (m) m.balance += h.jml;
+          });
         pengeluaran = pengeluaran.filter((x) => !selected[cat].has(x.id));
       }
       selected[cat].clear();
@@ -285,7 +321,8 @@ export function resetAll() {
   openMkpModal({
     title: "Hapus semua data?",
     desc: "Ketik RESET",
-    formHTML: '<input id="resetConfirm" class="input" placeholder="Ketik RESET">',
+    formHTML:
+      '<input id="resetConfirm" class="input" placeholder="Ketik RESET">',
     confirmText: "Hapus Semua",
     action: () => {
       let v = $("resetConfirm") ? $("resetConfirm").value : "";
@@ -293,14 +330,27 @@ export function resetAll() {
         showToast("Ketik RESET");
         return;
       }
-      const uid = localStorage.getItem('mkp_last_uid') || 'guest';
+      const uid = localStorage.getItem("mkp_last_uid") || "guest";
       // hapus data per user + global
-      ["brankas_money","brankas_physical","brankas_invest","brankas_debt","brankas_pendapatan","brankas_pengeluaran","brankas_anggaran"].forEach(k=>{
+      [
+        "brankas_money",
+        "brankas_physical",
+        "brankas_invest",
+        "brankas_debt",
+        "brankas_pendapatan",
+        "brankas_pengeluaran",
+        "brankas_anggaran",
+      ].forEach((k) => {
         localStorage.removeItem(k);
         localStorage.removeItem(`${k}_${uid}`);
       });
-      money = []; physical = []; invest = []; debts = [];
-      pendapatan = []; pengeluaran = []; anggaran = [];
+      money = [];
+      physical = [];
+      invest = [];
+      debts = [];
+      pendapatan = [];
+      pengeluaran = [];
+      anggaran = [];
       save();
     },
   });
@@ -309,12 +359,24 @@ export function resetAll() {
 export function save() {
   // simpan per-user
   localStorage.setItem(getUserKey("brankas_money"), JSON.stringify(money));
-  localStorage.setItem(getUserKey("brankas_physical"), JSON.stringify(physical));
+  localStorage.setItem(
+    getUserKey("brankas_physical"),
+    JSON.stringify(physical),
+  );
   localStorage.setItem(getUserKey("brankas_invest"), JSON.stringify(invest));
   localStorage.setItem(getUserKey("brankas_debt"), JSON.stringify(debts));
-  localStorage.setItem(getUserKey("brankas_pendapatan"), JSON.stringify(pendapatan));
-  localStorage.setItem(getUserKey("brankas_pengeluaran"), JSON.stringify(pengeluaran));
-  localStorage.setItem(getUserKey("brankas_anggaran"), JSON.stringify(anggaran));
+  localStorage.setItem(
+    getUserKey("brankas_pendapatan"),
+    JSON.stringify(pendapatan),
+  );
+  localStorage.setItem(
+    getUserKey("brankas_pengeluaran"),
+    JSON.stringify(pengeluaran),
+  );
+  localStorage.setItem(
+    getUserKey("brankas_anggaran"),
+    JSON.stringify(anggaran),
+  );
   // hapus sisa global biar gak balik hantu
   localStorage.removeItem("brankas_money");
   renderAll();
@@ -331,7 +393,18 @@ export async function renderAll() {
     const { renderAsetList } = await import("./modules/aset.js");
     const { renderHutangList } = await import("./modules/hutang.js");
 
-    renderBeranda(money, physical, invest, debts, pendapatan, pengeluaran, anggaran, berandaView, berandaDateFilter, berandaMonthFilter);
+    renderBeranda(
+      money,
+      physical,
+      invest,
+      debts,
+      pendapatan,
+      pengeluaran,
+      anggaran,
+      berandaView,
+      berandaDateFilter,
+      berandaMonthFilter,
+    );
     renderInvestasiList();
     renderMasukList();
     renderKeluarList();
@@ -339,15 +412,27 @@ export async function renderAll() {
     if (renderAsetList) renderAsetList();
     if (renderHutangList) renderHutangList();
 
-    let opts = money.map((m) => `<option value="${esc(m.name)}">${esc(m.name)}</option>`).join("");
+    let opts = money
+      .map((m) => `<option value="${esc(m.name)}">${esc(m.name)}</option>`)
+      .join("");
     let sb = $("sumberBayar");
-    if (sb) sb.innerHTML = '<option value="">Pilih sumber bayar</option>' + opts;
+    if (sb)
+      sb.innerHTML = '<option value="">Pilih sumber bayar</option>' + opts;
     let ps = $("pSumber");
-    if (ps) ps.innerHTML = '<option value="">Pilih sumber masuk</option>' + opts;
+    if (ps)
+      ps.innerHTML = '<option value="">Pilih sumber masuk</option>' + opts;
     let es = $("eSumber");
-    if (es) es.innerHTML = '<option value="">Pilih sumber keluar</option>' + opts;
+    if (es)
+      es.innerHTML = '<option value="">Pilih sumber keluar</option>' + opts;
 
-    ["money","invest","physical","debts","pendapatan","pengeluaran"].forEach((cat) => {
+    [
+      "money",
+      "invest",
+      "physical",
+      "debts",
+      "pendapatan",
+      "pengeluaran",
+    ].forEach((cat) => {
       let bulkEl = $("bulk" + cat.charAt(0).toUpperCase() + cat.slice(1));
       if (bulkEl) {
         if (bulkMode[cat]) bulkEl.classList.add("show");
