@@ -1,4 +1,4 @@
-// js/modules/aset.js - FIXED v2.3 - Fixed Set Type Mismatch + Consistent Validation
+// js/modules/aset.js - FIXED v2.4 - Fix Lainnya Custom Input Hilang + Case Insensitive
 import {
   $,
   fmt,
@@ -13,9 +13,44 @@ import {
   selected,
 } from "../app.js";
 
+// === FIX TOGGLE CUSTOM - INI YANG HILANG ===
+function isLainnya(val) {
+  return (
+    String(val || "").toLowerCase() === "lain" ||
+    String(val || "").toLowerCase() === "lainnya"
+  );
+}
+
+function bindCustomToggles() {
+  const ju = $("jenisUang");
+  const jb = $("jenisBarang");
+  const ncu = $("namaUangCustom");
+  const ncb = $("namaBarangCustom");
+
+  if (ju && ncu && !ju._mkpBound) {
+    ju._mkpBound = true;
+    ju.addEventListener("change", () => {
+      ncu.style.display = isLainnya(ju.value) ? "block" : "none";
+      if (isLainnya(ju.value)) ncu.focus();
+    });
+    // initial state
+    ncu.style.display = isLainnya(ju.value) ? "block" : "none";
+  }
+
+  if (jb && ncb && !jb._mkpBound) {
+    jb._mkpBound = true;
+    jb.addEventListener("change", () => {
+      ncb.style.display = isLainnya(jb.value) ? "block" : "none";
+      if (isLainnya(jb.value)) ncb.focus();
+    });
+    ncb.style.display = isLainnya(jb.value) ? "block" : "none";
+  }
+}
+
 export function addMoney() {
   const j = $("jenisUang").value;
-  const namaRaw = j === "lain" ? $("namaUangCustom").value.trim() : j.trim();
+  const ncu = $("namaUangCustom");
+  const namaRaw = isLainnya(j) ? (ncu ? ncu.value.trim() : "") : j.trim();
   const nama = namaRaw.toUpperCase();
   const s = parseInt($("saldoUang").value) || 0;
 
@@ -26,11 +61,11 @@ export function addMoney() {
 
   money.push({ id: genId(), name: nama, balance: s });
   $("saldoUang").value = "";
-  const nc = $("namaUangCustom");
-  if (nc) {
-    nc.value = "";
-    nc.style.display = "none";
+  if (ncu) {
+    ncu.value = "";
+    ncu.style.display = "none";
   }
+  if ($("jenisUang")) $("jenisUang").value = $("jenisUang").options[0].value;
 
   save();
   showToast(`Aset ${nama} ditambah`);
@@ -38,7 +73,8 @@ export function addMoney() {
 
 export function addPhysical() {
   const j = $("jenisBarang").value;
-  const namaRaw = j === "lain" ? $("namaBarangCustom").value.trim() : j.trim();
+  const ncb = $("namaBarangCustom");
+  const namaRaw = isLainnya(j) ? (ncb ? ncb.value.trim() : "") : j.trim();
   const nama = namaRaw.toUpperCase();
   const n = parseInt($("nilaiBarang").value) || 0;
   const lok = $("lokasiBarang").value.trim();
@@ -48,11 +84,12 @@ export function addPhysical() {
   physical.push({ id: genId(), name: nama, value: n, loc: lok });
   $("nilaiBarang").value = "";
   $("lokasiBarang").value = "";
-  const nb = $("namaBarangCustom");
-  if (nb) {
-    nb.value = "";
-    nb.style.display = "none";
+  if (ncb) {
+    ncb.value = "";
+    ncb.style.display = "none";
   }
+  if ($("jenisBarang"))
+    $("jenisBarang").value = $("jenisBarang").options[0].value;
 
   save();
   showToast(`Barang ${nama} ditambah`);
@@ -61,7 +98,6 @@ export function addPhysical() {
 export function editMoney(id) {
   const it = money.find((x) => String(x.id) === String(id));
   if (!it) return;
-
   openMkpModal({
     title: "Edit Aset",
     formHTML: `<input id="editName" class="input" value="${esc(it.name)}"><input id="editNominal" class="input" type="number" value="${it.balance}">`,
@@ -70,9 +106,7 @@ export function editMoney(id) {
       const en = $("editName");
       const eno = $("editNominal");
       const newName = en ? en.value.trim().toUpperCase() : "";
-
       if (!newName) return showToast("Nama tidak boleh kosong");
-
       if (
         money.some(
           (m) =>
@@ -82,10 +116,8 @@ export function editMoney(id) {
       ) {
         return showToast(`Aset ${newName} sudah ada`);
       }
-
       it.name = newName;
       if (eno) it.balance = parseInt(eno.value) || 0;
-
       save();
       showToast("Aset diupdate");
     },
@@ -95,7 +127,6 @@ export function editMoney(id) {
 export function editPhysical(id) {
   const it = physical.find((x) => String(x.id) === String(id));
   if (!it) return;
-
   openMkpModal({
     title: "Edit Barang",
     formHTML: `<input id="editNamaBarang" class="input" value="${esc(it.name)}"><input id="editNilaiBarang" class="input" type="number" value="${it.value || 0}"><input id="editLokasiBarang" class="input" value="${esc(it.loc || "")}" placeholder="Lokasi">`,
@@ -104,14 +135,11 @@ export function editPhysical(id) {
       const a = $("editNamaBarang");
       const b = $("editNilaiBarang");
       const c = $("editLokasiBarang");
-
       const newName = a ? a.value.trim().toUpperCase() : "";
       if (!newName) return showToast("Nama barang tidak boleh kosong");
-
       it.name = newName;
       if (b) it.value = parseInt(b.value) || 0;
       if (c) it.loc = c.value.trim();
-
       save();
       showToast("Barang diupdate");
     },
@@ -152,7 +180,6 @@ export function delPhysical(id) {
 export function deleteBulk(cat) {
   if (cat !== "money" && cat !== "physical") return;
   if (selected[cat].size === 0) return showToast("Tidak ada yang dipilih");
-
   openMkpModal({
     title: `Hapus ${selected[cat].size} data?`,
     desc: "Hapus terpilih?",
@@ -160,14 +187,12 @@ export function deleteBulk(cat) {
     action: () => {
       const toDel = new Set(Array.from(selected[cat]).map(String));
       if (cat === "money") {
-        for (let i = money.length - 1; i >= 0; i--) {
+        for (let i = money.length - 1; i >= 0; i--)
           if (toDel.has(String(money[i].id))) money.splice(i, 1);
-        }
       }
       if (cat === "physical") {
-        for (let i = physical.length - 1; i >= 0; i--) {
+        for (let i = physical.length - 1; i >= 0; i--)
           if (toDel.has(String(physical[i].id))) physical.splice(i, 1);
-        }
       }
       selected[cat].clear();
       bulkMode[cat] = false;
@@ -177,6 +202,7 @@ export function deleteBulk(cat) {
 }
 
 export function renderAsetList() {
+  bindCustomToggles(); // <-- FIX: pastiin toggle kepasang setiap render
   const lm = $("listMoney");
   if (lm) {
     lm.innerHTML =
@@ -185,22 +211,10 @@ export function renderAsetList() {
           const safeId = esc(String(m.id));
           const isSelected =
             selected["money"].has(String(m.id)) || selected["money"].has(m.id);
-
-          return `
-        <div class="item">
-          <div class="item-left">
-            ${bulkMode["money"] ? `<div class="checkbox ${isSelected ? "checked" : ""}" onclick="toggleSelect('money','${safeId}')">${isSelected ? "✓" : ""}</div>` : ""}
-            <div><b>${esc(m.name)}</b><br><small class="num">Rp ${fmt(m.balance)}</small></div>
-          </div>
-          <div style="display:flex;gap:6px">
-            <button type="button" onclick="editMoney('${safeId}')" class="iconBtn">✎</button>
-            <button type="button" onclick="delMoney('${safeId}')" class="iconBtn" style="color:#E02424">✕</button>
-          </div>
-        </div>`;
+          return `<div class="item"><div class="item-left">${bulkMode["money"] ? `<div class="checkbox ${isSelected ? "checked" : ""}" onclick="toggleSelect('money','${safeId}')">${isSelected ? "✓" : ""}</div>` : ""}<div><b>${esc(m.name)}</b><br><small class="num">Rp ${fmt(m.balance)}</small></div></div><div style="display:flex;gap:6px"><button type="button" onclick="editMoney('${safeId}')" class="iconBtn">✎</button><button type="button" onclick="delMoney('${safeId}')" class="iconBtn" style="color:#E02424">✕</button></div></div>`;
         })
         .join("") || '<div class="emptyState">Belum ada aset</div>';
   }
-
   const lp = $("listPhysical");
   if (lp) {
     lp.innerHTML =
@@ -210,18 +224,7 @@ export function renderAsetList() {
           const isSelected =
             selected["physical"].has(String(p.id)) ||
             selected["physical"].has(p.id);
-
-          return `
-        <div class="item">
-          <div class="item-left">
-            ${bulkMode["physical"] ? `<div class="checkbox ${isSelected ? "checked" : ""}" onclick="toggleSelect('physical','${safeId}')">${isSelected ? "✓" : ""}</div>` : ""}
-            <div><b>${esc(p.name)}</b> ${p.loc ? ` - ${esc(p.loc)}` : ""}<br><small class="num">${p.value ? "Rp " + fmt(p.value) : "Inventaris"}</small></div>
-          </div>
-          <div style="display:flex;gap:6px">
-            <button type="button" onclick="editPhysical('${safeId}')" class="iconBtn">✎</button>
-            <button type="button" onclick="delPhysical('${safeId}')" class="iconBtn" style="color:#E02424">✕</button>
-          </div>
-        </div>`;
+          return `<div class="item"><div class="item-left">${bulkMode["physical"] ? `<div class="checkbox ${isSelected ? "checked" : ""}" onclick="toggleSelect('physical','${safeId}')">${isSelected ? "✓" : ""}</div>` : ""}<div><b>${esc(p.name)}</b> ${p.loc ? ` - ${esc(p.loc)}` : ""}<br><small class="num">${p.value ? "Rp " + fmt(p.value) : "Inventaris"}</small></div></div><div style="display:flex;gap:6px"><button type="button" onclick="editPhysical('${safeId}')" class="iconBtn">✎</button><button type="button" onclick="delPhysical('${safeId}')" class="iconBtn" style="color:#E02424">✕</button></div></div>`;
         })
         .join("") || '<div class="emptyState">Belum ada barang</div>';
   }
@@ -234,3 +237,4 @@ window.editPhysical = editPhysical;
 window.delMoney = delMoney;
 window.delPhysical = delPhysical;
 window.deleteBulk = deleteBulk;
+window.bindCustomToggles = bindCustomToggles;
