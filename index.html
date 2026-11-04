@@ -2,10 +2,7 @@
 <html lang="id">
   <head>
     <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
-    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MKP - Manajer Keuangan Pribadi</title>
     <meta name="theme-color" content="#6366F1" />
     <link
@@ -15,6 +12,43 @@
     <link rel="stylesheet" href="css/style.css" />
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+    <style>
+      .top .burger,
+      .top .iconBtnTop {
+        width: 36px;
+        height: 36px;
+        border-radius: 12px;
+        border: 1px solid #e2e8f0;
+        background: #fff;
+        display: grid;
+        place-items: center;
+        color: #0f172a;
+        cursor: pointer;
+      }
+      .top .burger svg,
+      .top .iconBtnTop svg,
+      .bottomNav .bNavItem svg,
+      .drawer .m-item svg {
+        stroke-width: 1.8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+      .drawer .m-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-weight: 500;
+      }
+      .drawer .m-item svg {
+        width: 18px;
+        height: 18px;
+        flex-shrink: 0;
+        color: #334155;
+      }
+      .drawer .m-item.active svg {
+        color: #6366f1;
+      }
+    </style>
   </head>
   <body>
     <div
@@ -64,6 +98,7 @@
           Cek sesi...
         </p>
         <button
+          type="button"
           onclick="doLogin()"
           style="
             width: 100%;
@@ -74,6 +109,7 @@
             color: #fff;
             border: none;
             font-weight: 700;
+            cursor: pointer;
           "
         >
           Masuk dengan Google
@@ -83,18 +119,22 @@
 
     <div class="top">
       <div style="display: flex; gap: 10px; align-items: center">
-        <button type="button" class="burger" onclick="toggleMenu()">
+        <button
+          type="button"
+          class="burger"
+          onclick="toggleMenu()"
+          aria-label="Menu"
+        >
           <svg
             width="18"
             height="18"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
-            stroke-width="2"
           >
-            <line x1="4" y1="7" x2="20" y2="7" />
-            <line x1="4" y1="12" x2="20" y2="12" />
-            <line x1="4" y1="17" x2="20" y2="17" />
+            <line x1="3" y1="6" x2="21" y2="6" />
+            <line x1="3" y1="12" x2="21" y2="12" />
+            <line x1="3" y1="18" x2="21" y2="18" />
           </svg>
         </button>
         <div class="brand">
@@ -115,29 +155,34 @@
       <div style="display: flex; gap: 8px; align-items: center">
         <button
           type="button"
+          class="iconBtnTop"
           onclick="openTab('ai')"
-          style="
-            width: 36px;
-            height: 36px;
-            border-radius: 12px;
-            border: 1px solid #e0e7ff;
-            background: linear-gradient(135deg, #eef2ff, #e0e7ff);
-            display: grid;
-            place-items: center;
-            font-size: 18px;
-          "
           title="AI Insight"
         >
-          🤖
-        </button>
-        <button type="button" class="calIcon" onclick="openCalModal()">
           <svg
             width="18"
             height="18"
             viewBox="0 0 24 24"
             fill="none"
             stroke="currentColor"
-            stroke-width="1.8"
+          >
+            <path d="M9.5 2L11 7l5 1.5L11 10l-1.5 5L8 10l-5-1.5L8 7z" />
+            <path d="M19 11l1 2 2 1-2 1-1 2-1-2-2-1 2-1z" />
+            <path d="M5 15l1 1 1 1-1 1-1 1-1-1-1-1 1-1z" />
+          </svg>
+        </button>
+        <button
+          type="button"
+          class="iconBtnTop calIcon"
+          onclick="openCalModal()"
+          title="Kalender"
+        >
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
           >
             <rect x="3" y="4" width="18" height="18" rx="3" />
             <path d="M16 2v4M8 2v4M3 10h18" />
@@ -148,31 +193,67 @@
 
     <div class="drawer" id="drawer">
       <button type="button" class="m-item active" onclick="openTab('beranda')">
-        📊 Beranda
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path
+            d="M3 9.5L12 3l9 6.5V20a1 1 0 0 1-1 1h-5v-5H9v5H4a1 1 0 0 1-1-1V9.5z"
+          /></svg
+        >Beranda
       </button>
       <button type="button" class="m-item" onclick="openTab('aset')">
-        💼 Aset & Inventaris
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <rect x="2" y="7" width="20" height="14" rx="2" />
+          <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2" /></svg
+        >Aset & Inventaris
       </button>
       <button type="button" class="m-item" onclick="openTab('hutang')">
-        💳 Hutang
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <rect x="2" y="5" width="20" height="14" rx="2" />
+          <path d="M2 10h20" /></svg
+        >Hutang
       </button>
       <button type="button" class="m-item" onclick="openTab('pendapatan')">
-        💹 Arus Masuk
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
+          <polyline points="16 7 22 7 22 13" /></svg
+        >Arus Masuk
       </button>
       <button type="button" class="m-item" onclick="openTab('pengeluaran')">
-        💸 Arus Keluar
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <polyline points="22 17 13.5 8.5 8.5 13.5 2 7" />
+          <polyline points="16 17 22 17 22 11" /></svg
+        >Arus Keluar
       </button>
       <button type="button" class="m-item" onclick="openTab('anggaran')">
-        🎯 Anggaran
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <circle cx="12" cy="12" r="9" />
+          <circle cx="12" cy="12" r="4" /></svg
+        >Anggaran
       </button>
       <button type="button" class="m-item" onclick="openTab('investasi')">
-        📈 Investasi
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="M3 3v18h18" />
+          <path d="M18 9l-5 5-4-4-5 5" /></svg
+        >Investasi
+      </button>
+      <button type="button" class="m-item" onclick="openTab('kalkulator')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <rect x="4" y="4" width="16" height="16" rx="2" />
+          <path d="M8 8h3M8 12h8M8 16h5" />
+          <path d="M14 8h4M14 12v4" /></svg
+        >Kalkulator Finansial
       </button>
       <button type="button" class="m-item" onclick="openTab('ai')">
-        🤖 AI Keuangan
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="M9.5 2L11 7l5 1.5L11 10l-1.5 5L8 10l-5-1.5L8 7z" /></svg
+        >AI Keuangan
       </button>
       <button type="button" class="m-item" onclick="openTab('pengaturan')">
-        ⚙️ Pengaturan
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <circle cx="12" cy="12" r="3" />
+          <path
+            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1 .6A1.65 1.65 0 0 1 12 21a1.65 1.65 0 0 1-2-1 1.65 1.65 0 0 0-1-.6 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-.6-1A1.65 1.65 0 0 1 3 12a1.65 1.65 0 0 1 1-2 1.65 1.65 0 0 0 .6-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1-.6A1.65 1.65 0 0 1 12 3a1.65 1.65 0 0 1 2 1 1.65 1.65 0 0 0 1 .6A1.65 1.65 0 0 0 18.2 3.33l.06.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 .6 1 1.65 1.65 0 0 1 1 2 1.65 1.65 0 0 1-1 2 1.65 1.65 0 0 0-.6 1z"
+          /></svg
+        >Pengaturan
       </button>
     </div>
     <div class="ov" id="ov" onclick="toggleMenu()"></div>
@@ -206,9 +287,7 @@
             </div>
           </div>
         </div>
-
         <div id="aiInsight" style="margin: 12px 14px 0 14px"></div>
-
         <div
           style="
             display: grid;
@@ -391,37 +470,56 @@
 
       <div id="tab-investasi" class="tab">
         <div class="card">
-          <select id="jenisInvest" class="input">
+          <select
+            id="jenisInvest"
+            class="input"
+            onchange="onJenisInvestChange()"
+          >
             <option value="Saham">Saham</option>
             <option value="Crypto">Crypto</option>
             <option value="Emas">Emas</option>
-            <option value="Deposito">Deposito</option>
-          </select>
-          <input
-            id="namaInvest"
-            class="input"
-            placeholder="Kode Saham (contoh: BBCA)"
-          />
-          <input
+            <option value="Reksadana">Reksadana</option>
+            <option value="Lainnya">Lainnya</option></select
+          ><label
+            for="lotInvest"
+            style="
+              font-size: 12px;
+              font-weight: 600;
+              margin-top: 8px;
+              display: block;
+            "
+            >Jumlah Lot</label
+          ><input
             id="lotInvest"
             class="input num"
             type="number"
-            placeholder="Jumlah Lot (1 lot = 100 lembar)"
-          />
-          <input
+            placeholder="Contoh: 100"
+          /><label
+            for="avgInvest"
+            style="
+              font-size: 12px;
+              font-weight: 600;
+              margin-top: 8px;
+              display: block;
+            "
+            >Avg per Lembar</label
+          ><input
             id="avgInvest"
             class="input num"
             type="number"
-            placeholder="Harga Beli per Lembar (contoh: 9000)"
-          />
-          <input
+            placeholder="Contoh: 8750"
+          /><input
+            id="namaInvest"
+            class="input"
+            placeholder="Nama / Kode (contoh: BBCA)"
+            style="margin-top: 8px"
+          /><input
             id="nilaiInvest"
             class="input num"
             type="number"
-            placeholder="Nilai Rp (otomatis kalau saham)"
+            placeholder="Total Nilai Rp"
             style="display: none"
-          />
-          <button type="button" class="btn btn-y" onclick="addInvest()">
+          /><button type="button" class="btn btn-y" onclick="addInvest()">
             + Tambah Investasi
           </button>
           <div id="bulkInvest" class="bulkBar">
@@ -460,7 +558,7 @@
             border: none;
           "
         >
-          <b>🤖 AI Keuangan Pribadi</b>
+          <b>AI Keuangan Pribadi</b>
           <p style="font-size: 12px; opacity: 0.9; margin-top: 6px">
             Tanya apa aja soal keuangan kamu. AI baca data Beranda, Aset, BBCA
             lot, dll.
@@ -495,8 +593,8 @@
               class="input"
               style="margin: 0; flex: 1"
               placeholder="Contoh: Kenapa saya boros?"
-            />
-            <button
+            /><button
+              type="button"
               class="btn btn-y"
               style="width: auto; margin: 0; padding: 0 18px"
               onclick="sendAI()"
@@ -508,24 +606,25 @@
             style="display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap"
           >
             <button
+              type="button"
               class="filterChip"
               onclick="quickAI('Analisis keuangan hari ini')"
             >
-              Analisis Hari Ini
-            </button>
-            <button
+              Analisis Hari Ini</button
+            ><button
+              type="button"
               class="filterChip"
-              onclick="quickAI('Kenapa beranda saya -1.150.000?')"
+              onclick="quickAI('Kenapa beranda saya negatif?')"
             >
-              Kenapa -1.150.000?
-            </button>
-            <button
+              Kenapa Negatif?</button
+            ><button
+              type="button"
               class="filterChip"
-              onclick="quickAI('Berapa floating BBCA saya?')"
+              onclick="quickAI('Berapa floating investasi saya?')"
             >
-              Floating BBCA?
-            </button>
-            <button
+              Floating Investasi?</button
+            ><button
+              type="button"
               class="filterChip"
               onclick="quickAI('Saran hemat bensin dan makan')"
             >
@@ -586,6 +685,11 @@
           <div id="anggaranKhusus"></div>
         </div>
       </div>
+
+      <div id="tab-kalkulator" class="tab">
+        <div id="contentKalkulator"></div>
+      </div>
+
       <div id="tab-hutang" class="tab">
         <div class="card">
           <input
@@ -596,12 +700,12 @@
             id="sisaHutang"
             class="input num"
             type="number"
-            placeholder="Sisa hutang Rp"
+            placeholder="Pokok / Sisa hutang Rp"
           /><input
             id="cicilanHutang"
             class="input num"
             type="number"
-            placeholder="Cicilan per hari Rp"
+            placeholder="Cicilan per bulan Rp"
           /><select id="sumberBayar" class="input">
             <option value="">Pilih sumber untuk bayar hutang</option></select
           ><button type="button" class="btn btn-y" onclick="addDebt()">
@@ -626,6 +730,7 @@
           <div id="listDebt"></div>
         </div>
       </div>
+
       <div id="tab-pendapatan" class="tab">
         <div class="card">
           <div
@@ -736,6 +841,7 @@
           <div id="listPendapatan"></div>
         </div>
       </div>
+
       <div id="tab-pengeluaran" class="tab">
         <div class="card">
           <div
@@ -866,11 +972,12 @@
           <div id="listPengeluaran"></div>
         </div>
       </div>
+
       <div id="tab-pengaturan" class="tab">
         <div class="card">
           <b>Pengaturan</b>
           <p style="margin-top: 8px; font-size: 13px; color: var(--muted)">
-            Data disimpan di browser Anda.
+            Data disimpan di browser & cloud Anda.
           </p>
           <div style="margin-top: 16px">
             <button
@@ -881,6 +988,7 @@
             >
               Hapus Semua Data</button
             ><button
+              type="button"
               onclick="logout()"
               style="
                 width: 100%;
@@ -891,6 +999,7 @@
                 background: #fff;
                 color: #0f172a;
                 font-weight: 700;
+                cursor: pointer;
               "
             >
               Logout / Ganti Akun
@@ -1022,6 +1131,7 @@
       </div>
     </div>
     <div id="toast" class="toast"></div>
+
     <div class="bottomNav">
       <button
         type="button"

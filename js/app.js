@@ -1,8 +1,7 @@
-// js/app.js - OTAK UTAMA MKP MODULAR FINAL - FIX AUTO 0 PER USER
+// js/app.js - FINAL v2.5 - Modular + Cached + iOS Fix + Kalkulator & AI Integration
 import { supabase } from "./supabase.js";
 import { checkAuth } from "./auth.js";
 
-// --- UTILS ---
 export function esc(s) {
   return String(s || "").replace(
     /[&<>"']/g,
@@ -22,7 +21,6 @@ export function genId() {
   return Date.now() + Math.floor(Math.random() * 1000);
 }
 
-// FIX: KEY PER USER + BERSIHIN HANTU 8668888
 function getUserKey(k) {
   const uid = localStorage.getItem("mkp_last_uid") || "guest";
   return `${k}_${uid}`;
@@ -30,11 +28,9 @@ function getUserKey(k) {
 
 export function safeParse(k, fb) {
   try {
-    // ambil per-user dulu, kalau gak ada fallback ke global (data lama)
     let v = localStorage.getItem(getUserKey(k)) || localStorage.getItem(k);
     if (!v) return fb;
     let parsed = JSON.parse(v);
-    // FILTER HANTU 8668888 OTOMATIS
     if (Array.isArray(parsed)) {
       parsed = parsed.filter((x) => {
         if (!x) return false;
@@ -45,7 +41,7 @@ export function safeParse(k, fb) {
       });
     }
     return parsed;
-  } catch (e) {
+  } catch {
     return fb;
   }
 }
@@ -80,36 +76,34 @@ export let bulkMode = {
     pendapatan: new Set(),
     pengeluaran: new Set(),
   };
+
 export let _pendingAction = null;
 
-// DIPANGGIL DARI auth.js SETIAP LOGIN
+function replaceArray(target, newData) {
+  target.length = 0;
+  target.push(...newData);
+}
+
 export function initForUser(userId) {
   const last = localStorage.getItem("mkp_last_uid");
   if (last && last !== userId) {
-    // GANTI EMAIL / USER BARU -> PAKSA 0
-    money = [];
-    physical = [];
-    invest = [];
-    debts = [];
-    pendapatan = [];
-    pengeluaran = [];
-    anggaran = [];
+    [money, physical, invest, debts, pendapatan, pengeluaran, anggaran].forEach(
+      (a) => (a.length = 0),
+    );
     localStorage.setItem("mkp_last_uid", userId);
     save();
   } else {
     localStorage.setItem("mkp_last_uid", userId);
-    // load ulang data per user
-    money = safeParse("brankas_money", []);
-    physical = safeParse("brankas_physical", []);
-    invest = safeParse("brankas_invest", []);
-    debts = safeParse("brankas_debt", []);
-    pendapatan = safeParse("brankas_pendapatan", []);
-    pengeluaran = safeParse("brankas_pengeluaran", []);
-    anggaran = safeParse("brankas_anggaran", []);
+    replaceArray(money, safeParse("brankas_money", []));
+    replaceArray(physical, safeParse("brankas_physical", []));
+    replaceArray(invest, safeParse("brankas_invest", []));
+    replaceArray(debts, safeParse("brankas_debt", []));
+    replaceArray(pendapatan, safeParse("brankas_pendapatan", []));
+    replaceArray(pengeluaran, safeParse("brankas_pengeluaran", []));
+    replaceArray(anggaran, safeParse("brankas_anggaran", []));
   }
 }
 
-// --- TOAST & MODAL ---
 export function showToast(m) {
   let t = $("toast");
   if (!t) return;
@@ -149,6 +143,7 @@ export function closeCalModal() {
 export function toggleMenu() {
   let d = $("drawer"),
     ov = $("ov");
+  if (!d || !ov) return;
   if (d.classList.contains("open")) {
     d.classList.remove("open");
     ov.classList.remove("open");
@@ -182,6 +177,8 @@ export function openTab(t) {
     pengaturan: "bProfil",
     aset: "bBeranda",
     hutang: "bBeranda",
+    ai: "bProfil",
+    kalkulator: "bProfil", // FIX: kalkulator masuk Profil
   };
   let el = $(map[t] || "bBeranda");
   if (el) el.classList.add("active");
@@ -196,6 +193,7 @@ export function toggleCustomInput(s, i) {
 }
 export function setBerandaView(v) {
   berandaView = v;
+  window.berandaView = v;
   document
     .querySelectorAll("#calModal .filterChip")
     .forEach((c) => c.classList.remove("active"));
@@ -213,6 +211,7 @@ export function setBerandaCustomDate() {
   let bd = $("berandaDate");
   berandaDateFilter = bd && bd.value ? new Date(bd.value) : null;
   berandaView = "custom";
+  window.berandaView = berandaView;
   document
     .querySelectorAll("#calModal .filterChip")
     .forEach((c) => c.classList.remove("active"));
@@ -222,6 +221,7 @@ export function setBerandaCustomMonth() {
   let bm = $("berandaMonth");
   berandaMonthFilter = bm && bm.value ? bm.value : null;
   berandaView = "customMonth";
+  window.berandaView = berandaView;
   document
     .querySelectorAll("#calModal .filterChip")
     .forEach((c) => c.classList.remove("active"));
@@ -235,6 +235,7 @@ export function resetBerandaFilter() {
   berandaDateFilter = null;
   berandaMonthFilter = null;
   berandaView = "hari";
+  window.berandaView = berandaView;
   document
     .querySelectorAll("#calModal .filterChip")
     .forEach((c) => c.classList.remove("active"));
@@ -275,6 +276,7 @@ export function toggleSelect(cat, id) {
   else selected[cat].add(id);
   renderAll();
 }
+
 export function deleteBulk(cat) {
   if (selected[cat].size === 0) {
     showToast("Tidak ada yang dipilih");
@@ -286,30 +288,64 @@ export function deleteBulk(cat) {
     confirmText: "Hapus",
     action: () => {
       if (cat === "money")
-        money = money.filter((x) => !selected[cat].has(x.id));
+        replaceArray(
+          money,
+          money.filter((x) => !selected[cat].has(x.id)),
+        );
       if (cat === "invest")
-        invest = invest.filter((x) => !selected[cat].has(x.id));
+        replaceArray(
+          invest,
+          invest.filter((x) => !selected[cat].has(x.id)),
+        );
       if (cat === "physical")
-        physical = physical.filter((x) => !selected[cat].has(x.id));
+        replaceArray(
+          physical,
+          physical.filter((x) => !selected[cat].has(x.id)),
+        );
       if (cat === "debts")
-        debts = debts.filter((x) => !selected[cat].has(x.id));
+        replaceArray(
+          debts,
+          debts.filter((x) => !selected[cat].has(x.id)),
+        );
       if (cat === "pendapatan") {
         pendapatan
           .filter((x) => selected[cat].has(x.id))
           .forEach((h) => {
-            let m = money.find((x) => x.name === h.sumber);
+            let m = money.find(
+              (x) =>
+                String(x.name || "")
+                  .trim()
+                  .toUpperCase() ===
+                String(h.sumber || "")
+                  .trim()
+                  .toUpperCase(),
+            );
             if (m) m.balance -= h.jml;
           });
-        pendapatan = pendapatan.filter((x) => !selected[cat].has(x.id));
+        replaceArray(
+          pendapatan,
+          pendapatan.filter((x) => !selected[cat].has(x.id)),
+        );
       }
       if (cat === "pengeluaran") {
         pengeluaran
           .filter((x) => selected[cat].has(x.id))
           .forEach((h) => {
-            let m = money.find((x) => x.name === h.sumber);
+            let m = money.find(
+              (x) =>
+                String(x.name || "")
+                  .trim()
+                  .toUpperCase() ===
+                String(h.sumber || "")
+                  .trim()
+                  .toUpperCase(),
+            );
             if (m) m.balance += h.jml;
           });
-        pengeluaran = pengeluaran.filter((x) => !selected[cat].has(x.id));
+        replaceArray(
+          pengeluaran,
+          pengeluaran.filter((x) => !selected[cat].has(x.id)),
+        );
       }
       selected[cat].clear();
       bulkMode[cat] = false;
@@ -331,7 +367,6 @@ export function resetAll() {
         return;
       }
       const uid = localStorage.getItem("mkp_last_uid") || "guest";
-      // hapus data per user + global
       [
         "brankas_money",
         "brankas_physical",
@@ -344,20 +379,21 @@ export function resetAll() {
         localStorage.removeItem(k);
         localStorage.removeItem(`${k}_${uid}`);
       });
-      money = [];
-      physical = [];
-      invest = [];
-      debts = [];
-      pendapatan = [];
-      pengeluaran = [];
-      anggaran = [];
+      [
+        money,
+        physical,
+        invest,
+        debts,
+        pendapatan,
+        pengeluaran,
+        anggaran,
+      ].forEach((a) => (a.length = 0));
       save();
     },
   });
 }
 
 export function save() {
-  // simpan per-user
   localStorage.setItem(getUserKey("brankas_money"), JSON.stringify(money));
   localStorage.setItem(
     getUserKey("brankas_physical"),
@@ -377,23 +413,77 @@ export function save() {
     getUserKey("brankas_anggaran"),
     JSON.stringify(anggaran),
   );
-  // hapus sisa global biar gak balik hantu
-  localStorage.removeItem("brankas_money");
+  [
+    "brankas_money",
+    "brankas_physical",
+    "brankas_invest",
+    "brankas_debt",
+    "brankas_pendapatan",
+    "brankas_pengeluaran",
+    "brankas_anggaran",
+  ].forEach((k) => localStorage.removeItem(k));
   renderAll();
 }
 
-// --- RENDER ALL MODULAR ---
+export function bindInvestasiJenis() {
+  const sel = $("jenisInvest");
+  if (!sel) return;
+  if (sel.dataset.bound === "1") {
+    window.onJenisInvestChange?.();
+    return;
+  }
+  sel.dataset.bound = "1";
+  sel.addEventListener("change", () => window.onJenisInvestChange?.());
+  window.onJenisInvestChange?.();
+}
+
+let cachedModules = null;
+async function getRenderModules() {
+  if (cachedModules) return cachedModules;
+  const [
+    beranda,
+    investasi,
+    masuk,
+    keluar,
+    anggaranM,
+    aset,
+    hutang,
+    ai,
+    kalkulator,
+    pengaturan,
+  ] = await Promise.all([
+    import("./modules/beranda.js"),
+    import("./modules/investasi.js"),
+    import("./modules/arus-masuk.js"),
+    import("./modules/arus-keluar.js"),
+    import("./modules/anggaran.js"),
+    import("./modules/aset.js"),
+    import("./modules/hutang.js"),
+    import("./modules/ai.js"),
+    import("./modules/kalkulator.js"),
+    import("./modules/pengaturan.js"),
+  ]);
+  cachedModules = {
+    renderBeranda: beranda.renderBeranda,
+    renderInvestasiList: investasi.renderInvestasiList,
+    renderMasukList: masuk.renderMasukList,
+    renderKeluarList: keluar.renderKeluarList,
+    renderAnggaranList: anggaranM.renderAnggaranList,
+    renderAsetList: aset.renderAsetList,
+    renderHutangList: hutang.renderHutangList,
+    renderAI: ai.renderAI,
+    renderKalkulator: kalkulator.renderKalkulator,
+    renderPengaturan:
+      pengaturan.renderPengaturan || pengaturan.renderSettings || null,
+  };
+  return cachedModules;
+}
+
 export async function renderAll() {
   try {
-    const { renderBeranda } = await import("./modules/beranda.js");
-    const { renderInvestasiList } = await import("./modules/investasi.js");
-    const { renderMasukList } = await import("./modules/arus-masuk.js");
-    const { renderKeluarList } = await import("./modules/arus-keluar.js");
-    const { renderAnggaranList } = await import("./modules/anggaran.js");
-    const { renderAsetList } = await import("./modules/aset.js");
-    const { renderHutangList } = await import("./modules/hutang.js");
-
-    renderBeranda(
+    window.berandaView = berandaView;
+    const mods = await getRenderModules();
+    mods.renderBeranda(
       money,
       physical,
       invest,
@@ -405,15 +495,19 @@ export async function renderAll() {
       berandaDateFilter,
       berandaMonthFilter,
     );
-    renderInvestasiList();
-    renderMasukList();
-    renderKeluarList();
-    renderAnggaranList();
-    if (renderAsetList) renderAsetList();
-    if (renderHutangList) renderHutangList();
+    mods.renderInvestasiList();
+    mods.renderMasukList();
+    mods.renderKeluarList();
+    mods.renderAnggaranList();
+    if (mods.renderAsetList) mods.renderAsetList();
+    if (mods.renderHutangList) mods.renderHutangList();
+    if (mods.renderAI) mods.renderAI(); // FIX: sekarang AI ke-render
+    if (mods.renderKalkulator) mods.renderKalkulator(); // FIX: kalkulator ke-render, gak untracked lagi
+    if (mods.renderPengaturan) mods.renderPengaturan();
 
-    let opts = money
-      .map((m) => `<option value="${esc(m.name)}">${esc(m.name)}</option>`)
+    let uniqueNames = [...new Set(money.map((m) => m.name))];
+    let opts = uniqueNames
+      .map((n) => `<option value="${esc(n)}">${esc(n)}</option>`)
       .join("");
     let sb = $("sumberBayar");
     if (sb)
@@ -441,12 +535,12 @@ export async function renderAll() {
       let countEl = $("count" + cat.charAt(0).toUpperCase() + cat.slice(1));
       if (countEl) countEl.textContent = selected[cat].size;
     });
+    bindInvestasiJenis();
   } catch (e) {
     console.error("renderAll", e);
   }
 }
 
-// Expose
 window.toggleMenu = toggleMenu;
 window.openTab = openTab;
 window.openCalModal = openCalModal;
@@ -467,6 +561,7 @@ window.deleteBulk = deleteBulk;
 window.resetAll = resetAll;
 window.save = save;
 window.initForUser = initForUser;
+window.bindInvestasiJenis = bindInvestasiJenis;
 
 import "./modules/aset.js";
 import "./modules/hutang.js";
@@ -476,7 +571,11 @@ import "./modules/arus-keluar.js";
 import "./modules/anggaran.js";
 import "./modules/pengaturan.js";
 import "./modules/ai.js";
+import "./modules/kalkulator.js";
 
-// Init
+document.addEventListener("DOMContentLoaded", () => {
+  bindInvestasiJenis();
+  setTimeout(bindInvestasiJenis, 800);
+});
 checkAuth();
 renderAll();

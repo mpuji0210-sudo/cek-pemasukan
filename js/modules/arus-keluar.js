@@ -1,4 +1,4 @@
-// js/modules/arus-keluar.js - Arus Keluar (Bensin, Makan, Rokok, Kopi)
+// js/modules/arus-keluar.js - FIXED v2.2 - Safe Budget Adjustment + Robust Null Checks
 import {
   $,
   fmt,
@@ -16,105 +16,181 @@ import {
   toggleCustomInput,
 } from "../app.js";
 
+function findMoney(name) {
+  return money.find(
+    (x) =>
+      String(x.name || "")
+        .trim()
+        .toUpperCase() ===
+      String(name || "")
+        .trim()
+        .toUpperCase(),
+  );
+}
+function findAnggaran(kat) {
+  return anggaran.find(
+    (a) =>
+      String(a.kat || a.nama || "")
+        .trim()
+        .toUpperCase() ===
+      String(kat || "")
+        .trim()
+        .toUpperCase(),
+  );
+}
+function toJakartaDateString(dateInput) {
+  const d = new Date(dateInput);
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Jakarta",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(d);
+}
 function filterByCalendar(list, type, dId, mId) {
-  const now = new Date();
+  const nowStr = toJakartaDateString(new Date());
   const dVal = $(dId) ? $(dId).value : null;
   const mVal = $(mId) ? $(mId).value : null;
-  if (type === "custom" && dVal) {
-    const d = new Date(dVal);
-    return list.filter(
-      (h) =>
-        new Date(h.tgl).toLocaleDateString("id-ID", {
-          timeZone: "Asia/Jakarta",
-        }) === d.toLocaleDateString("id-ID", { timeZone: "Asia/Jakarta" }),
-    );
-  }
-  if (type === "custom" && mVal) {
-    const ym = mVal.split("-");
-    return list.filter((h) => {
-      const dt = new Date(h.tgl);
-      return (
-        dt.getFullYear() == parseInt(ym[0]) &&
-        dt.getMonth() + 1 == parseInt(ym[1])
-      );
-    });
-  }
-  if (type === "hari") {
-    return list.filter(
-      (h) =>
-        new Date(h.tgl).toLocaleDateString("id-ID", {
-          timeZone: "Asia/Jakarta",
-        }) === now.toLocaleDateString("id-ID", { timeZone: "Asia/Jakarta" }),
-    );
-  }
+  if (type === "custom" && dVal)
+    return list.filter((h) => toJakartaDateString(h.tgl) === dVal);
+  if (type === "custom" && mVal)
+    return list.filter((h) => toJakartaDateString(h.tgl).startsWith(mVal));
+  if (type === "hari")
+    return list.filter((h) => toJakartaDateString(h.tgl) === nowStr);
   if (type === "bulan") {
-    return list.filter((h) => {
-      const d = new Date(h.tgl);
-      return (
-        d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
-      );
-    });
+    const ym = nowStr.substring(0, 7);
+    return list.filter((h) => toJakartaDateString(h.tgl).startsWith(ym));
   }
   if (type === "tahun") {
-    return list.filter(
-      (h) => new Date(h.tgl).getFullYear() === now.getFullYear(),
-    );
+    const y = nowStr.substring(0, 4);
+    return list.filter((h) => toJakartaDateString(h.tgl).startsWith(y));
   }
   return list;
 }
 
 export function addPengeluaran() {
-  const jml = parseInt($("eJumlah").value) || 0;
-  const k = $("eKategori").value;
-  const kat = k === "lain" ? $("eCustom").value.trim() || "Lainnya" : k;
-  const sumber = $("eSumber").value;
-  const cat = $("eCatatan").value.trim();
-  if (!jml || !sumber) {
-    showToast("Isi jumlah dan sumber");
-    return;
-  }
-  const m = money.find((x) => x.name === sumber);
-  if (!m || m.balance < jml) {
-    showToast("Saldo tidak cukup");
-    return;
-  }
+  const jml = parseInt($("eJumlah")?.value) || 0;
+  const k = $("eKategori")?.value || "";
+  const katRaw = k === "lain" ? $("eCustom")?.value.trim() || "Lainnya" : k;
+  const kat = katRaw.trim().toUpperCase();
+  const sumberRaw = $("eSumber")?.value || "";
+  const cat = $("eCatatan")?.value.trim() || "";
+
+  if (!jml || !sumberRaw || !kat)
+    return showToast("Isi jumlah, kategori, dan sumber");
+
+  const m = findMoney(sumberRaw);
+  if (!m) return showToast("Sumber dompet tidak ditemukan");
+  if (m.balance < jml)
+    return showToast(`Saldo ${m.name} kurang Rp ${fmt(jml - m.balance)}`);
+
   m.balance -= jml;
   pengeluaran.unshift({
     id: genId(),
     jml: jml,
     kat: kat,
-    sumber: sumber,
+    sumber: m.name,
     cat: cat,
     tgl: new Date().toISOString(),
   });
-  $("eJumlah").value = "";
-  $("eCatatan").value = "";
+
+  if ($("eJumlah")) $("eJumlah").value = "";
+  if ($("eCatatan")) $("eCatatan").value = "";
   const ec = $("eCustom");
   if (ec) {
     ec.value = "";
     ec.style.display = "none";
   }
-  const ag = anggaran.find((a) => a.kat === kat || a.nama === kat);
+
+  const ag = findAnggaran(kat);
   if (ag) ag.terkumpul = (ag.terkumpul || 0) + jml;
+
   save();
-  showToast("Pengeluaran dicatat");
+  showToast(`- Rp ${fmt(jml)} ${kat} dari ${m.name}`);
 }
 
 export function delPengeluaran(id) {
-  const h = pengeluaran.find((x) => x.id === id);
+  const h = pengeluaran.find((x) => String(x.id) === String(id));
   if (!h) return;
+
   openMkpModal({
     title: "Hapus pengeluaran?",
-    desc: "Saldo dikembalikan",
+    desc: `Saldo ${h.sumber} + Rp ${fmt(h.jml)} & anggaran ${h.kat} - Rp ${fmt(h.jml)}`,
     confirmText: "Hapus",
     action: () => {
-      const m = money.find((x) => x.name === h.sumber);
-      if (m) m.balance += h.jml;
-      const ag = anggaran.find((a) => a.kat === h.kat || a.nama === h.kat);
+      const m = findMoney(h.sumber);
+      if (m) {
+        m.balance += h.jml;
+      } else {
+        showToast(
+          "Peringatan: Dompet asal tidak ditemukan, saldo tidak dikembalikan.",
+        );
+      }
+
+      const ag = findAnggaran(h.kat);
       if (ag) ag.terkumpul = Math.max(0, (ag.terkumpul || 0) - h.jml);
-      const idx = pengeluaran.findIndex((x) => x.id === id);
+
+      const idx = pengeluaran.findIndex((x) => String(x.id) === String(id));
       if (idx >= 0) pengeluaran.splice(idx, 1);
+
       save();
+      showToast("Pengeluaran dihapus");
+    },
+  });
+}
+
+export function editPengeluaran(id) {
+  const h = pengeluaran.find((x) => String(x.id) === String(id));
+  if (!h) return;
+
+  openMkpModal({
+    title: "Edit Pengeluaran",
+    formHTML: `<input id="editJmlKeluar" class="input" type="number" value="${h.jml}" placeholder="Jumlah"><input id="editKatKeluar" class="input" value="${esc(h.kat)}" placeholder="Kategori"><input id="editCatKeluar" class="input" value="${esc(h.cat || "")}" placeholder="Catatan">`,
+    confirmText: "Simpan",
+    action: () => {
+      const newJml = parseInt($("editJmlKeluar")?.value) || 0;
+      const newKatRaw = $("editKatKeluar")?.value.trim() || h.kat;
+      const newKat = newKatRaw.toUpperCase();
+
+      if (newJml <= 0) return showToast("Jumlah harus > 0");
+      if (!newKat) return showToast("Kategori tidak boleh kosong");
+
+      const m = findMoney(h.sumber);
+      if (m) {
+        const selisih = newJml - h.jml;
+        if (selisih > 0 && m.balance < selisih) {
+          return showToast(
+            `Saldo ${m.name} kurang Rp ${fmt(selisih - m.balance)}`,
+          );
+        }
+        m.balance -= selisih;
+      } else {
+        showToast(
+          "Peringatan: Dompet asal tidak ditemukan, saldo dompet tidak diubah.",
+        );
+      }
+
+      if (h.kat === newKat) {
+        const ag = findAnggaran(h.kat);
+        if (ag) {
+          const diffJml = newJml - h.jml;
+          ag.terkumpul = Math.max(0, (ag.terkumpul || 0) + diffJml);
+        }
+      } else {
+        const agOld = findAnggaran(h.kat);
+        if (agOld)
+          agOld.terkumpul = Math.max(0, (agOld.terkumpul || 0) - h.jml);
+
+        const agNew = findAnggaran(newKat);
+        if (agNew) agNew.terkumpul = (agNew.terkumpul || 0) + newJml;
+      }
+
+      h.jml = newJml;
+      h.kat = newKat;
+      h.cat = $("editCatKeluar")?.value.trim() || "";
+
+      save();
+      showToast("Pengeluaran diupdate");
     },
   });
 }
@@ -128,42 +204,43 @@ export function renderKeluarList() {
   );
 
   const kti = $("keluarTotalInfo");
-  if (kti)
-    kti.innerText =
-      "Total: Rp " +
-      fmt(fk.reduce((s, x) => s + x.jml, 0)) +
-      " - " +
-      fk.length +
-      " transaksi";
+  if (kti) {
+    const totalJml = fk.reduce((s, x) => s + (x.jml || 0), 0);
+    kti.innerText = `Total: Rp ${fmt(totalJml)} - ${fk.length} transaksi`;
+  }
 
   const lpeng = $("listPengeluaran");
-  if (lpeng)
+  if (lpeng) {
     lpeng.innerHTML =
       fk
         .slice(0, 50)
-        .map(
-          (h) => `
-    <div class="item">
-      <div class="item-left">
-        ${bulkMode["pengeluaran"] ? `<div class="checkbox ${selected["pengeluaran"].has(h.id) ? "checked" : ""}" onclick="toggleSelect('pengeluaran',${h.id})">${selected["pengeluaran"].has(h.id) ? "✓" : ""}</div>` : ""}
-        <div><b class="num" style="color:#E02424">- Rp ${fmt(h.jml)}</b> - ${esc(h.kat)}<br><small>${esc(h.cat || "")} - ${new Date(h.tgl).toLocaleDateString("id-ID", { timeZone: "Asia/Jakarta" })}</small></div>
-      </div>
-      <div><button type="button" onclick="delPengeluaran(${h.id})" class="iconBtn" style="color:#E02424">✕</button></div>
-    </div>`,
-        )
+        .map((h) => {
+          const safeId = esc(String(h.id));
+          const isSelected = selected["pengeluaran"].has(String(h.id));
+          const tgl = new Date(h.tgl).toLocaleDateString("id-ID", {
+            timeZone: "Asia/Jakarta",
+          });
+
+          return `
+        <div class="item">
+          <div class="item-left">
+            ${bulkMode["pengeluaran"] ? `<div class="checkbox ${isSelected ? "checked" : ""}" onclick="toggleSelect('pengeluaran','${safeId}')">${isSelected ? "✓" : ""}</div>` : ""}
+            <div>
+              <b class="num" style="color:#E02424">- Rp ${fmt(h.jml)}</b> - ${esc(h.kat)}<br>
+              <small>${esc(h.cat || "")} - ${tgl} - ${esc(h.sumber)}</small>
+            </div>
+          </div>
+          <div style="display:flex;gap:6px">
+            <button type="button" onclick="editPengeluaran('${safeId}')" class="iconBtn">✎</button>
+            <button type="button" onclick="delPengeluaran('${safeId}')" class="iconBtn" style="color:#E02424">✕</button>
+          </div>
+        </div>`;
+        })
         .join("") || '<div class="emptyState">Belum ada pengeluaran</div>';
-
-  const opts = money
-    .map((m) => `<option value="${esc(m.name)}">${esc(m.name)}</option>`)
-    .join("");
-  const es = $("eSumber");
-  if (es) es.innerHTML = '<option value="">Pilih sumber keluar</option>' + opts;
-
-  // Untuk chart pie kategori (dari file lama)
-  // Pie akan di-render di beranda.js pakai pengeluaran global
+  }
 }
 
-// Expose
 window.addPengeluaran = addPengeluaran;
 window.delPengeluaran = delPengeluaran;
+window.editPengeluaran = editPengeluaran;
 window.toggleCustomInput = toggleCustomInput;

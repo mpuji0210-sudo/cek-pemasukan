@@ -1,3 +1,4 @@
+/* css/style.css - FINAL v2.4 - Polished & Optimized */
 :root {
   --ink: #6366f1;
   --ink2: #8b5cf6;
@@ -10,21 +11,26 @@
   --grad-cyan: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
   --grad-hero: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
 }
+
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
   -webkit-tap-highlight-color: transparent;
 }
+
 body {
   font-family: "Inter", sans-serif;
   background: var(--paper);
   color: #0f172a;
   padding-bottom: calc(110px + env(safe-area-inset-bottom));
 }
+
 .num {
   font-family: "JetBrains Mono", monospace;
 }
+
+/* TOP BAR - CLEAN SIMPLE - ICON SAME AS BOTTOM */
 .top {
   position: fixed;
   top: 0;
@@ -33,7 +39,7 @@ body {
   width: 100%;
   max-width: 480px;
   z-index: 80;
-  background: rgba(255, 255, 255, 0.9);
+  background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--line);
   padding: 12px 14px;
@@ -42,27 +48,37 @@ body {
   align-items: center;
   height: 60px;
 }
-.burger {
-  width: 42px;
-  height: 42px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 10px;
-  border: 1px solid var(--line);
-  background: #fff;
-  cursor: pointer;
-}
-.calIcon {
+.top .burger,
+.top .iconBtnTop,
+.top .calIcon {
   width: 36px;
   height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  place-items: center;
   border-radius: 12px;
   border: 1px solid var(--line);
   background: #fff;
   cursor: pointer;
+  color: #0f172a;
+  transition:
+    background 0.2s,
+    transform 0.1s;
+}
+.top .burger:active,
+.top .iconBtnTop:active,
+.top .calIcon:active {
+  transform: scale(0.95);
+  background: #f1f5f9;
+}
+
+.top .burger svg,
+.top .iconBtnTop svg,
+.top .calIcon svg,
+.bottomNav .bNavItem svg,
+.drawer .m-item svg {
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 .brand {
   display: flex;
@@ -81,6 +97,8 @@ body {
   font-size: 12px;
   box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
 }
+
+/* DRAWER - CLEAN OUTLINE - NO EMOJI */
 .drawer {
   position: fixed;
   top: 0;
@@ -102,31 +120,53 @@ body {
   position: fixed;
   inset: 0;
   background: rgba(15, 23, 42, 0.32);
-  display: none;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.25s ease,
+    visibility 0.25s ease;
   z-index: 290;
 }
 .ov.open {
-  display: block;
+  opacity: 1;
+  visibility: visible;
 }
+
 .m-item {
   width: 100%;
   padding: 12px 14px;
   border-radius: 12px;
   display: flex;
-  gap: 10px;
-  font-weight: 600;
+  align-items: center;
+  gap: 12px;
+  font-weight: 500;
   margin-top: 8px;
   background: #fff;
   border: 1px solid var(--line);
   cursor: pointer;
   font-size: 13px;
   text-align: left;
+  color: #0f172a;
+  transition: background 0.2s;
+}
+.m-item:active {
+  background: #f1f5f9;
+}
+.m-item svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  color: #334155;
 }
 .m-item.active {
-  background: var(--grad-main);
-  color: #fff;
-  border-color: transparent;
+  background: #eef2ff;
+  color: var(--ink);
+  border-color: #e0e7ff;
 }
+.m-item.active svg {
+  color: var(--ink);
+}
+
 .main {
   padding-top: 60px;
   max-width: 480px;
@@ -139,6 +179,7 @@ body {
   padding: 16px;
   margin: 12px 14px;
 }
+
 .input {
   width: 100%;
   padding: 12px 13px;
@@ -146,9 +187,19 @@ body {
   border: 1px solid var(--line);
   background: #fff;
   margin-top: 10px;
-  font-size: 13px;
+  font-size: 16px;
   outline: none;
+  transition: border-color 0.2s;
 }
+@media (min-width: 768px) {
+  .input {
+    font-size: 13px;
+  }
+}
+.input:focus {
+  border-color: var(--ink);
+}
+
 .btn {
   width: 100%;
   padding: 12px;
@@ -158,6 +209,13 @@ body {
   margin-top: 10px;
   cursor: pointer;
   font-size: 13px;
+  transition:
+    transform 0.1s,
+    opacity 0.2s;
+}
+.btn:active {
+  transform: scale(0.98);
+  opacity: 0.9;
 }
 .btn-y {
   background: var(--grad-main);
@@ -168,12 +226,14 @@ body {
   background: #fff;
   border: 1px solid var(--line);
 }
+
 .tab {
   display: none;
 }
 .tab.active {
   display: block;
 }
+
 .item {
   display: flex;
   justify-content: space-between;
@@ -235,12 +295,21 @@ body {
   display: grid;
   place-items: center;
   cursor: pointer;
+  transition: background 0.2s;
 }
+.iconBtn:active {
+  background: #f1f5f9;
+}
+
 .filterBar {
   display: flex;
   gap: 8px;
   margin-top: 10px;
   overflow-x: auto;
+  scrollbar-width: none;
+}
+.filterBar::-webkit-scrollbar {
+  display: none;
 }
 .filterChip {
   padding: 8px 14px;
@@ -251,12 +320,17 @@ body {
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
+  transition: background 0.2s;
+}
+.filterChip:active {
+  background: #f1f5f9;
 }
 .filterChip.active {
   background: var(--grad-main);
   color: #fff;
   border-color: transparent;
 }
+
 .bottomNav {
   position: fixed;
   bottom: 0;
@@ -285,6 +359,7 @@ body {
   font-weight: 600;
   border: none;
   background: transparent;
+  transition: color 0.2s;
 }
 .bNavItem.active {
   color: var(--ink);
@@ -293,8 +368,8 @@ body {
 .bNavItem svg {
   width: 22px;
   height: 22px;
-  stroke-width: 1.6;
 }
+
 .chartWrap {
   height: 200px;
   position: relative;
@@ -311,16 +386,22 @@ body {
   border-radius: 50%;
   display: inline-block;
 }
+
 #mkpModal,
 #calModal {
   position: fixed;
   inset: 0;
   z-index: 500;
-  display: none;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.25s ease,
+    visibility 0.25s ease;
 }
 #mkpModal.open,
 #calModal.open {
-  display: block;
+  opacity: 1;
+  visibility: visible;
 }
 .modal-bg {
   position: absolute;
@@ -330,7 +411,7 @@ body {
 }
 .modal-box {
   position: relative;
-  min-height: 100%;
+  min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -344,11 +425,12 @@ body {
   overflow: hidden;
   box-shadow: 0 20px 60px rgba(15, 23, 42, 0.22);
 }
+
 .toast {
   position: fixed;
   left: 50%;
   bottom: calc(110px + env(safe-area-inset-bottom));
-  transform: translateX(-50%);
+  transform: translateX(-50%) translateY(20px);
   background: #0f172a;
   color: #fff;
   padding: 10px 18px;
@@ -356,13 +438,21 @@ body {
   font-size: 12px;
   font-weight: 600;
   z-index: 600;
-  display: none;
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.25s ease,
+    transform 0.25s ease,
+    visibility 0.25s ease;
   max-width: 90%;
   text-align: center;
 }
 .toast.show {
-  display: block;
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(0);
 }
+
 .hero {
   margin: 14px;
   background: var(--grad-hero);
@@ -389,6 +479,7 @@ body {
 .hero .num {
   color: #fff !important;
 }
+
 .progressBar {
   height: 8px;
   background: #f1f5f9;
@@ -420,8 +511,6 @@ body {
 .floating-card b {
   color: #b45309;
 }
-
-/* OVERRIDE SISA BERSIH JANGAN ITEM */
 .card.sisa-cerah {
   background: var(--grad-cyan) !important;
   color: #fff !important;

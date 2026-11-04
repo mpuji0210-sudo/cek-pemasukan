@@ -1,5 +1,5 @@
 // @ts-nocheck
-// js/modules/investasi.js - FINAL v7.1 - Clean No TS Error
+// js/modules/investasi.js - FINAL v7.3 - REFERENCE SAFE + LABEL DINAMIS FIX
 import {
   $,
   fmt,
@@ -359,53 +359,44 @@ if (document.readyState === "loading")
   document.addEventListener("DOMContentLoaded", ready);
 else ready();
 
+// --- FIX UTAMA: LABEL DINAMIS TANPA LABEL TAG ---
 window.onJenisInvestChange = function () {
-  const jenis = $("jenisInvest").value;
-  const lotLabel = document.querySelector("label[for='lotInvest']");
-  const avgLabel = document.querySelector("label[for='avgInvest']");
+  const jenis = $("jenisInvest")?.value || "Saham";
+  const namaInput = $("namaInvest");
   const lotInput = $("lotInvest");
   const avgInput = $("avgInvest");
   const nilaiInput = $("nilaiInvest");
-  if (!lotInput || !avgInput) return;
+  if (!lotInput || !avgInput || !namaInput) return;
   lotInput.style.display = "";
   avgInput.style.display = "";
-  if (nilaiInput) nilaiInput.style.display = "";
+  if (nilaiInput) nilaiInput.style.display = "none";
   lotInput.step = "1";
   avgInput.step = "1";
+
   if (jenis === "Emas") {
-    if (lotLabel) lotLabel.textContent = "Jumlah Gram";
-    lotInput.placeholder = "Contoh: 10";
+    namaInput.placeholder = "Nama Emas (contoh: ANTAM, UBS)";
+    lotInput.placeholder = "Jumlah Gram (contoh: 10)";
     lotInput.step = "any";
-    if (avgLabel) avgLabel.textContent = "Harga per Gram";
-    avgInput.placeholder = "Contoh: 1000000";
-    if (nilaiInput) nilaiInput.style.display = "none";
+    avgInput.placeholder = "Harga per Gram (contoh: 1400000)";
   } else if (jenis === "Saham") {
-    if (lotLabel) lotLabel.textContent = "Jumlah Lot";
-    lotInput.placeholder = "Contoh: 100";
-    if (avgLabel) avgLabel.textContent = "Avg per Lembar";
-    avgInput.placeholder = "Contoh: 8750";
-    if (nilaiInput) nilaiInput.style.display = "none";
+    namaInput.placeholder = "Kode Saham (contoh: BBCA)";
+    lotInput.placeholder = "Jumlah Lot (1 lot = 100 lembar)";
+    avgInput.placeholder = "Harga Beli per Lembar (contoh: 9000)";
   } else if (jenis === "Crypto") {
-    if (lotLabel) lotLabel.textContent = "Jumlah Coin";
-    lotInput.placeholder = "Contoh: 0.5";
+    namaInput.placeholder = "Kode Crypto (contoh: BTC, ETH)";
+    lotInput.placeholder = "Jumlah Coin (contoh: 0.5)";
     lotInput.step = "any";
-    if (avgLabel) avgLabel.textContent = "Harga per Coin";
-    avgInput.placeholder = "Contoh: 450000000.50";
+    avgInput.placeholder = "Harga per Coin (contoh: 950000000)";
     avgInput.step = "any";
-    if (nilaiInput) nilaiInput.style.display = "none";
   } else if (jenis === "Reksadana") {
-    if (lotLabel) lotLabel.textContent = "Jumlah Unit";
-    lotInput.placeholder = "Contoh: 1000";
+    namaInput.placeholder = "Nama Reksadana (contoh: BNI-AM)";
+    lotInput.placeholder = "Jumlah Unit (contoh: 1000)";
     lotInput.step = "any";
-    if (avgLabel) avgLabel.textContent = "NAV Beli";
-    avgInput.placeholder = "Contoh: 1534.56";
+    avgInput.placeholder = "NAV Beli (contoh: 1534.56)";
     avgInput.step = "any";
-    if (nilaiInput) nilaiInput.style.display = "none";
   } else {
-    if (lotLabel) lotLabel.textContent = "Keterangan Qty (Opsional)";
-    lotInput.placeholder = "Kosongkan jika tidak perlu";
+    namaInput.placeholder = `Nama ${jenis} (contoh: ${jenis} BCA)`;
     lotInput.style.display = "none";
-    if (avgLabel) avgLabel.textContent = "Harga / Nilai";
     avgInput.style.display = "none";
     if (nilaiInput) {
       nilaiInput.style.display = "";
